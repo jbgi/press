@@ -1,10 +1,12 @@
 universe: final: prev: let
   inherit (final) lib typst;
 in {
-  typstBuildDocument = lib.extendedmkDerivation {
+  buildTypstDocument = lib.extendMkDerivation {
     constructDrv = final.stdenvNoCC.mkDerivation;
 
-    extendedDrvArgs = finalAttrs: {
+    excludeDrvArgNames = [];
+
+    extendDrvArgs = finalAttrs: {
       name ? "${args.pname}-${args.version}",
       src ? null,
       srcs ? null,
@@ -44,7 +46,7 @@ in {
       buildPhase =
         args.buildPhase
         or (''
-            export XDG_DATA_HOME=$TMPDIR
+            export XDG_DATA_HOME=$(mktemp -d)
           ''
           + universe
           + userPackages
@@ -55,8 +57,8 @@ in {
       meta =
         meta
         // {
-          badPlatforms = meta.badPlatforms or [] ++ typst.badPlatforms;
-          platforms = lib.intersectLists meta.platforms or lib.platforms.all typst.meta.platforms;
+          badPlatforms = meta.badPlatforms or [] ++ typst.badPlatforms or [];
+          platforms = lib.intersectLists meta.platforms or lib.platforms.all typst.meta.platforms or [];
         };
     };
   };
