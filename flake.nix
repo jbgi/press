@@ -20,13 +20,13 @@
       buildTypst = overlay;
     };
 
-    checks.x86_64-linux.default = let
+    checks.x86_64-linux = let
       pkgs = import nixpkgs {
         system = "x86_64-linux";
         overlays = [overlay];
       };
     in
-      pkgs.callPackage ./tests {};
+      builtins.removeAttrs (pkgs.callPackage ./tests {}) ["override" "overrideDerivation"];
 
     devShells = let
       system = "x86_64-linux";
@@ -41,6 +41,7 @@
         in [
           p.nil
           p.alejandra
+          p.typstyle
         ];
       };
     };

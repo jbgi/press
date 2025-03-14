@@ -26,9 +26,9 @@ in {
       format ? "pdf",
       ...
     } @ args: let
-      universe = lib.optionalString typstUniverse ''
+      universe' = lib.optionalString typstUniverse ''
         mkdir -p $XDG_DATA_HOME/typst/packages
-        mv -r ${universe}/packages/preview $XDG_DATA_HOME/typst/packages/
+        cp -r ${universe}/packages/preview $XDG_DATA_HOME/typst/packages/
       '';
 
       userPackages = lib.lists.foldl (accum: pack:
@@ -48,7 +48,7 @@ in {
         or (''
             export XDG_DATA_HOME=$(mktemp -d)
           ''
-          + universe
+          + universe'
           + userPackages
           + ''
             typst c ${file} -f ${format} $out
