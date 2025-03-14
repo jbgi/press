@@ -20,6 +20,14 @@
       buildTypst = overlay;
     };
 
+    checks.x86_64-linux.default = let
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = [overlay];
+      };
+    in
+      pkgs.callPackage ./tests {};
+
     devShells = let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
