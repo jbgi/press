@@ -1,5 +1,13 @@
-universe: final: prev: let
+final: prev: let
   inherit (final) lib typst;
+
+  lock = builtins.fromJSON (builtins.readFile ./flake.lock);
+  uniGit = lock.nodes.universe.locked;
+  universe = fetchTarball {
+    url = "https://api.github.com/repos/${uniGit.owner}/${uniGit.repo}/tarball/${uniGit.rev}";
+    sha256 = uniGit.narHash;
+  };
+  
 in {
   buildTypstDocument = lib.extendMkDerivation {
     constructDrv = final.stdenvNoCC.mkDerivation;

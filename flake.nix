@@ -14,7 +14,7 @@
     nixpkgs,
     universe,
   }: let
-    overlay = (import ./.) universe;
+    overlay = import ./.;
   in {
     overlays = {
       default = overlay;
@@ -24,7 +24,7 @@
     checks.x86_64-linux = let
       pkgs = import nixpkgs {
         system = "x86_64-linux";
-        overlays = [overlay];
+        overlays = [ (import self) ];
       };
     in
       builtins.removeAttrs (pkgs.callPackage ./tests {}) ["override" "overrideDerivation"];

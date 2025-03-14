@@ -25,7 +25,7 @@
 
     pkgs = import nixpkgs {
       inherit system;
-      overlays = [press.overlays.default];
+      overlays = [ (import press) ];
     };
   in {
     packages.${system}.default = pkgs.buildTypstDocument {

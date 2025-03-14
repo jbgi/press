@@ -16,11 +16,14 @@ Just import the overlay.
 
 ```nix
 pkgs = import nixpkgs {
-  overlays = [ press.overlays.default ];
+  overlays = [ (import press) ];
 };
 
 ...
 document = pkgs.buildTypstDocument {
-  src = ./
+  name = "myDoc";
+  src = ./.;
 };
 ```
+
+
