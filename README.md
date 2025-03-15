@@ -26,4 +26,17 @@ document = pkgs.buildTypstDocument {
 };
 ```
 
+If you want to use a non-Universe package:
+```nix
+documents = pkgs.buildTypeDocument {
+  name = "myDoc";
+  src = ./.;
+  extraPackages = {
+    local = somePackage;
+  };
+};
+```
+Where `local` is the package namespace, and `somePackage` is a store path that has a `typst.toml` file in it.
+You can put packages in whatever namespace you want, not just local.
 
+See the [template](./template/flake.nix) for more API details.
