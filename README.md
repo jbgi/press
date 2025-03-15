@@ -32,7 +32,8 @@ documents = pkgs.buildTypeDocument {
   name = "myDoc";
   src = ./.;
   extraPackages = {
-    local = somePackage;
+    local = [ somePackage anotherPack ];
+    foospace = [ fooPackage ];
   };
 };
 ```
