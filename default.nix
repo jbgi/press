@@ -66,6 +66,13 @@ in {
         paths = fonts;
         stripPrefix = "/share/fonts";
       };
+
+      formatPrefix =
+        if format == "pdf"
+        then "-f"
+        else if format == "html"
+        then "--features html -f"
+        else throw "Unsupported format.";
     in {
       nativeBuildInputs = nativeBuildInputs ++ [typst];
       patches = typstPatches ++ patches;
@@ -83,7 +90,7 @@ in {
           + universe'
           + userPackages
           + ''
-            typst c ${file} -f ${format} $out
+            typst c ${file} ${formatPrefix} ${format} $out
 
             runHook postBuild
           '');

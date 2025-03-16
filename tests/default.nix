@@ -45,6 +45,13 @@
     ];
   });
 
+  html = buildTypstDocument (self: {
+    name = "html";
+    src = ./documents;
+    file = "html.typ";
+    format = "html";
+  });
+
   gitImport = buildTypstDocument (self: {
     name = "gitImport";
     src = ./documents;
