@@ -55,6 +55,9 @@
       fonts = [
         pkgs.roboto
       ];
+      # [Optional] Patches to the Typst document
+      # Default: []
+      typstPatches = []
     };
   };
 }

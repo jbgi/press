@@ -26,7 +26,16 @@
       inconsolata
     ];
   });
-  
+
+  patch = buildTypstDocument (self: {
+    name = "patch";
+    src = ./documents;
+    file = "patch.typ";
+    typstPatches = [
+      ./patch.patch
+    ];
+  });
+    
   gitImport = buildTypstDocument (self: {
     name = "gitImport";
     src = ./documents;
