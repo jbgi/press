@@ -18,7 +18,6 @@ Just import the overlay.
 pkgs = import nixpkgs {
   overlays = [ (import press) ];
 };
-
 ...
 document = pkgs.buildTypstDocument {
   name = "myDoc";
@@ -35,6 +34,17 @@ documents = pkgs.buildTypeDocument {
     local = [ somePackage anotherPack ];
     foospace = [ fooPackage ];
   };
+};
+```
+
+If you want to use custom fonts:
+```nix
+documents = pkgs.buildTypstDocument {
+  name = "myDoc";
+  src = ./.;
+  fonts = [
+    pkgs.roboto
+  ];
 };
 ```
 Where `local` is the package namespace, and `somePackage` is a store path that has a `typst.toml` file in it.
