@@ -24,7 +24,7 @@
     checks.x86_64-linux = let
       pkgs = import nixpkgs {
         system = "x86_64-linux";
-        overlays = [ (import self) ];
+        overlays = [(import self)];
       };
     in
       builtins.removeAttrs (pkgs.callPackage ./tests {}) ["override" "overrideDerivation"];

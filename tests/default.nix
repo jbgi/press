@@ -35,7 +35,16 @@
       ./patch.patch
     ];
   });
-    
+
+  patchUni = buildTypstDocument (self: {
+    name = "patchUni";
+    src = ./documents;
+    file = "patchUni.typ";
+    universePatches = [
+      ./universe.patch
+    ];
+  });
+
   gitImport = buildTypstDocument (self: {
     name = "gitImport";
     src = ./documents;

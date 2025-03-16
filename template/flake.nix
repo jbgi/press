@@ -25,7 +25,7 @@
 
     pkgs = import nixpkgs {
       inherit system;
-      overlays = [ (import press) ];
+      overlays = [(import press)];
     };
   in {
     packages.${system}.default = pkgs.buildTypstDocument {
@@ -57,7 +57,11 @@
       ];
       # [Optional] Patches to the Typst document
       # Default: []
-      typstPatches = []
+      typstPatches = [];
+      # [Optional] Patches to the Typst Universe repo
+      # To apply a patch, it much be a patch to the entire Typst Packages repo.
+      # Default: []
+      univerPatches = [];
     };
   };
 }

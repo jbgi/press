@@ -24,15 +24,27 @@ in {
       meta ? {},
       fonts ? [],
       typstUniverse ? true,
+      universePatches ? [],
       extraPackages ? {},
       file ? "main.typ",
       format ? "pdf",
       ...
     } @ args: let
-      universe' = lib.optionalString typstUniverse ''
-        mkdir -p $XDG_DATA_HOME/typst/packages
-        cp -r ${universe}/packages/preview $XDG_DATA_HOME/typst/packages/
-      '';
+      universe' = let
+        patchedUni =
+          if universePatches == []
+          then universe
+          else
+            final.applyPatches {
+              name = "universe-patched";
+              src = universe;
+              patches = universePatches;
+            };
+      in
+        lib.optionalString typstUniverse ''
+          mkdir -p $XDG_DATA_HOME/typst/packages
+          cp -r ${patchedUni}/packages/preview $XDG_DATA_HOME/typst/packages/
+        '';
 
       userPackages = lib.attrsets.foldlAttrs (shString: namespace: paths:
         lib.lists.foldl (accum: path: let
@@ -60,7 +72,7 @@ in {
       strictDeps = true;
 
       env.TYPST_FONT_PATHS = "${fontsDrv}";
-      
+
       buildPhase =
         args.buildPhase
         or (''
