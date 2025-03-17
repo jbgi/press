@@ -3,6 +3,7 @@
   fetchFromGitHub,
   fira-code,
   inconsolata,
+  ripgrep,
 }: let
   note-me = fetchFromGitHub {
     owner = "FlandiaYingman";
@@ -32,6 +33,16 @@ in {
       fira-code
       inconsolata
     ];
+
+    nativeCheckInputs = [
+      ripgrep
+    ];
+    doCheck = true;
+    checkPhase = ''
+      set -eu
+      rg --binary "BaseFont [^\.]*FiraCode" $out
+      rg --binary "BaseFont [^\.]*Inconsolata" $out
+      '';
   });
 
   patch = buildTypstDocument (self: {
