@@ -79,7 +79,7 @@ in {
 
         # Some helpers. Match expression when.
         type = builtins.typeOf extraPackages;
-        isDrv = lib.isDerivation extraPackages;
+        isDrv = (lib.isDerivation extraPackages) || (extraPackages ? outPath);
       in
         if (type == "set" && !isDrv)
         then
@@ -88,7 +88,7 @@ in {
             # Might as well accept lists, str, path, or drv as well here.
             let
               valType = builtins.typeOf paths;
-              valIsDrv = lib.isDerivation paths;
+              valIsDrv = (lib.isDerivation paths) || (paths ? outPath);
             in
               if valType == "list"
               then
@@ -97,14 +97,12 @@ in {
                   + userPack {inherit path namespace;})
                 shString
                 paths
-              else if (valType == "string" || valType == "path" || valIsDrv)
-              then
+              else 
                 # Same as below. Realize the path. Use the namespace.
                 userPack {
                   inherit namespace;
                   path = "${paths}";
-                }
-              else throw "Found type ${valType} for the ${namespace} key's value in extraPackages. Expected list, string, path, or derivation") ""
+                }) ""
           extraPackages
         else if type == "list"
         then
@@ -116,14 +114,10 @@ in {
               namespace = "local";
             }) ""
           extraPackages
-        else if (type == "string" || isDrv || type == "path")
-        then
-          # Interpolate the string so if it is a path or drv it is realized.
-          userPack {
-            path = "${extraPackages}";
-            namespace = "local";
-          }
-        else throw "Found type ${type} for binding 'extraPackages', expected AttrSet, list, string, path, or derivation";
+        else userPack {
+          namespace = "local";
+          path = "${extraPackages}";
+        };
 
       # All fonts in nixpkgs should follow this.
       fontsDrv = symlinkJoin {
