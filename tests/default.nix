@@ -42,7 +42,7 @@ in {
       set -eu
       rg --binary "BaseFont [^\.]*FiraCode" $out
       rg --binary "BaseFont [^\.]*Inconsolata" $out
-      '';
+    '';
   });
 
   patch = buildTypstDocument (self: {

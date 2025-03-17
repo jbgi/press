@@ -1,5 +1,5 @@
 final: prev: let
-  inherit (final) lib typst symlinkJoin;
+  inherit (final) lib typst symlinkJoin stdenvNoCC applyPatches;
 
   lock = builtins.fromJSON (builtins.readFile ./flake.lock);
   uniGit = lock.nodes.universe.locked;
@@ -10,7 +10,7 @@ final: prev: let
 in {
   buildTypstDocument = lib.extendMkDerivation {
     # No need for CC here
-    constructDrv = final.stdenvNoCC.mkDerivation;
+    constructDrv = stdenvNoCC.mkDerivation;
 
     # IDK exactly but at least extraPackages is required
     # or things break.
@@ -41,7 +41,7 @@ in {
           if universePatches == []
           then universe
           else
-            final.applyPatches {
+            applyPatches {
               name = "universe-patched";
               src = universe;
               patches = universePatches;
