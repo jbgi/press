@@ -1,6 +1,7 @@
 final: prev: let
-  inherit (final) lib typst symlinkJoin stdenvNoCC applyPatches;
-
+  inherit (final) lib typst symlinkJoin stdenvNoCC applyPatches makeBinaryWrapper;
+  inherit (final.xorg) lndir;
+  
   lock = builtins.fromJSON (builtins.readFile ./flake.lock);
   uniGit = lock.nodes.universe.locked;
   universe = fetchTarball {
@@ -20,21 +21,19 @@ in {
     # Put sane defualts.
     extendDrvArgs = finalAttrs: {
       name ? "${args.pname}-${args.version}",
-      src ? null,
-      typstPatches ? [],
-      patches ? [],
-      logLevel ? "",
-      buildInputs ? [],
-      nativeBuildInputs ? [],
+      verbose ? false,
       meta ? {},
       fonts ? [],
+      typstPatches ? [],
       typstUniverse ? true,
       universePatches ? [],
       extraPackages ? {},
       file ? "main.typ",
       format ? "pdf",
       ...
-    } @ args: let
+    } @ args:
+      assert builtins.elem format ["pdf" "html"];
+      let
       # Must patch Typst Universe if requested.
       universe' = let
         patchedUni =
@@ -47,110 +46,97 @@ in {
               patches = universePatches;
             };
       in
-        lib.optionalString typstUniverse ''
-          mkdir -p $XDG_DATA_HOME/typst/packages
-          cp -r ${patchedUni}/packages/preview $XDG_DATA_HOME/typst/packages/
-        '';
+        symlinkJoin {
+          name = "universe-pkg";
+          paths = [];
+          postBuild = ''
+              mkdir -p $out/share/typst/packages/
 
-      # Must carefully arrange the environment so that Typst gets the packages.
-      # Read the docs, but it's basically:
-      #
-      # $XDG_DATA_HOME/typst/packages/$NAMESPACE/$PACKAGE_NAME/$PACKAGE_VERSION/typst.toml
-      # And we are looking for the TOML file.
-      #
+              ${lib.getExe lndir} -silent ${patchedUni}/packages $out/share/typst/packages/
+              ls -al $out/share/typst/packages
+            '';
+        };
+
       # It is good to allow the user to provide an AttrSet if they want specific namespaces for packages.
       # But also if they provide a list, just throw it in the "local" namespace as the Typst documentation
       # uses that. If they just provide a single package, then do the same thing.
       userPackages = let
-        # I feel like there may be a funny point free way to do this, but my brain cannot
-        # figure it out.
-        # A typst.toml is required. There is no other sane way of doing it.
-        userPack = {
-          path,
-          namespace,
-        }: let
-          manifest = lib.importTOML "${path}/typst.toml";
-          version = manifest.package.version or (throw "${path}/typst.toml missing version field");
-          name = manifest.package.name or (throw "${path}/typst.toml missing name field");
-        in ''
-          mkdir -p $XDG_DATA_HOME/typst/packages/${namespace}/${name}/${version}
-          cp -r ${path}/* $XDG_DATA_HOME/typst/packages/${namespace}/${name}/${version}
-        '';
-
+        inherit (builtins) typeOf;
+        inherit (lib) isDerivation attrsets lists;
+        
         # Some helpers. Match expression when.
-        type = builtins.typeOf extraPackages;
-        isDrv = (lib.isDerivation extraPackages) || (extraPackages ? outPath);
+        type = typeOf extraPackages;
+        isDrv = (isDerivation extraPackages) || (extraPackages ? outPath);
+
+        userPack = final.callPackage ./src/mkPackage.nix;
       in
         if (type == "set" && !isDrv)
         then
           # Set key is the namespace.
-          lib.attrsets.foldlAttrs (shString: namespace: paths:
+          attrsets.foldlAttrs (pkgs: namespace: paths:
             # Might as well accept lists, str, path, or drv as well here.
             let
-              valType = builtins.typeOf paths;
-              valIsDrv = (lib.isDerivation paths) || (paths ? outPath);
+              valType = typeOf paths;
+              valIsDrv = (isDerivation paths) || (paths ? outPath);
             in
               if valType == "list"
               then
-                lib.lists.foldl (accum: path:
+                lists.foldl (accum: src:
                   accum
-                  + userPack {inherit path namespace;})
-                shString
+                  ++ [(userPack {inherit src namespace;})])
+                pkgs
                 paths
               else 
                 # Same as below. Realize the path. Use the namespace.
-                userPack {
+                [(userPack {
                   inherit namespace;
-                  path = "${paths}";
-                }) ""
+                  src = "${paths}";
+                })]) []
           extraPackages
         else if type == "list"
         then
           # Put all the packages in the local namespace.
-          lib.lists.foldl (accum: path:
-            accum
-            + userPack {
-              inherit path;
-              namespace = "local";
-            }) ""
+          lists.foldl (pkgs: src:
+            pkgs
+            ++ [(userPack {
+              inherit src;
+            })]) []
           extraPackages
-        else userPack {
-          namespace = "local";
-          path = "${extraPackages}";
-        };
+        else [(userPack {
+          src = "${extraPackages}";
+        })];
 
       # All fonts in nixpkgs should follow this.
-      fontsDrv = symlinkJoin {
-        name = "typst-fonts";
-        paths = fonts;
-        stripPrefix = "/share/fonts";
+      fontsDrv = final.callPackage ./src/mkFonts.nix { inherit fonts name; };
+
+      # Combine all the packages to one drv
+      pkgsDrv = symlinkJoin {
+        name = name + "-deps";
+        paths = userPackages ++ lib.optionals typstUniverse [universe'];
       };
 
-      # HTML is experimental.
-      formatPrefix =
-        if format == "pdf"
-        then "-f"
-        else if format == "html"
-        then "--features html -f"
-        else throw "Unsupported format.";
+      typstWrap = symlinkJoin {
+        name = "typst-wrapped";
+        paths = [ typst ];
+        buildInputs = [ makeBinaryWrapper ];
+        postBuild = ''
+            wrapProgram $out/bin/typst \
+              --set TYPST_FONT_PATHS ${fontsDrv}/share/fonts \
+              --set XDG_DATA_HOME ${pkgsDrv}/share
+              '';
+        meta.mainProgram = "typst";
+      };
     in {
-      nativeBuildInputs = nativeBuildInputs ++ [typst];
-      patches = typstPatches ++ patches;
+      nativeBuildInputs = args.nativeBuildInputs or [typstWrap];
       strictDeps = true;
-
-      env.TYPST_FONT_PATHS = "${fontsDrv}";
-
+      patches = args.patches or [] ++ lib.trivial.warnIf (typstPatches != []) "typstPatches is deprecated and will be removed in a future release. Just use the 'patches' attribute." typstPatches;
+      
       buildPhase =
         args.buildPhase
         or (''
             runHook preBuild
 
-            export XDG_DATA_HOME=$(mktemp -d)
-          ''
-          + universe'
-          + userPackages
-          + ''
-            typst c ${file} ${formatPrefix} ${format} $out
+            typst c ${file} ${lib.optionalString verbose "--verbose"} ${lib.optionalString (format == "html") "--features html"} -f ${format} $out
 
             runHook postBuild
           '');

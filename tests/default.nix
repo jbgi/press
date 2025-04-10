@@ -1,6 +1,5 @@
 {
   buildTypstDocument,
-  fetchFromGitHub,
   fira-code,
   inconsolata,
   ripgrep,
@@ -12,24 +11,25 @@
     repo = "note-me";
     rev = "03310b70607e13bdaf6928a6a9df1962af1005ff";
   };
+
+  mkTest = {name, ...}@args: buildTypstDocument (self: (args // {
+    inherit name;
+    src = ./documents;
+    file = self.name + ".typ";
+  }));
 in {
-  basic = buildTypstDocument (self: {
+  basic = mkTest {
     name = "basic";
-    src = ./documents;
     typstUniverse = false;
-    file = "basic.typ";
-  });
+  };
 
-  imports = buildTypstDocument (self: {
+  imports = mkTest {
     name = "import";
-    src = ./documents;
     file = "import.typ";
-  });
+  };
 
-  fonts = buildTypstDocument (self: {
+  fonts = mkTest {
     name = "fonts";
-    src = ./documents;
-    file = "fonts.typ";
     fonts = [
       fira-code
       inconsolata
@@ -44,78 +44,60 @@ in {
       rg --binary "BaseFont [^\.]*FiraCode" $out
       rg --binary "BaseFont [^\.]*Inconsolata" $out
     '';
-  });
+  };
 
-  patch = buildTypstDocument (self: {
+  patch = mkTest {
     name = "patch";
-    src = ./documents;
-    file = "patch.typ";
-    typstPatches = [
+    patches = [
       ./patch.patch
     ];
-  });
+  };
 
-  patchUni = buildTypstDocument (self: {
+  patchUni = mkTest {
     name = "patchUni";
-    src = ./documents;
-    file = "patchUni.typ";
     universePatches = [
       ./universe.patch
     ];
-  });
+  };
 
-  html = buildTypstDocument (self: {
+  html = mkTest {
     name = "html";
-    src = ./documents;
-    file = "html.typ";
     format = "html";
-  });
+  };
 
-  gitImport = buildTypstDocument (self: {
+  gitImport = mkTest {
     name = "gitImport";
-    src = ./documents;
-    file = "gitImport.typ";
     extraPackages = {
       local = [note-me];
     };
-  });
+  };
 
-  gitImportList = buildTypstDocument (self: {
+  gitImportList = mkTest {
     name = "gitImport";
-    src = ./documents;
-    file = "gitImport.typ";
     extraPackages = [note-me];
-  });
+  };
 
-  gitImportString = buildTypstDocument (self: {
+  gitImportString = mkTest {
     name = "gitImport";
-    src = ./documents;
-    file = "gitImport.typ";
     extraPackages = "${note-me}";
-  });
+  };
 
-  gitImportDrv = buildTypstDocument (self: {
+  gitImportDrv = mkTest {
     name = "gitImport";
-    src = ./documents;
-    file = "gitImport.typ";
     extraPackages = note-me;
-  });
+  };
 
-  gitImportAttrStr = buildTypstDocument (self: {
+  gitImportAttrStr = mkTest {
     name = "gitImport";
-    src = ./documents;
-    file = "gitImport.typ";
     extraPackages = {
       local = "${note-me}";
     };
-  });
+  };
 
-  gitImportAttrDrv = buildTypstDocument (self: {
+  gitImportAttrDrv = mkTest {
     name = "gitImport";
-    src = ./documents;
-    file = "gitImport.typ";
     extraPackages = {
       local = note-me;
     };
-  });
+  };
 }
