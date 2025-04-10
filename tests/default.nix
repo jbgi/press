@@ -1,5 +1,6 @@
 {
   buildTypstDocument,
+  fetchFromGitHub,
   fira-code,
   inconsolata,
   ripgrep,
@@ -12,10 +13,17 @@
     rev = "03310b70607e13bdaf6928a6a9df1962af1005ff";
   };
 
+  note-meGh = fetchFromGitHub {
+    inherit (note-me) rev;
+    owner = "FlandiaYingman";
+    repo = "note-me";
+    hash = "sha256-Bpmdt59Tt4DNBg8G435xccH/W3aYSK+EuaU2ph2uYTY=";
+  };
+  
   mkTest = {name, ...}@args: buildTypstDocument (self: (args // {
     inherit name;
     src = ./documents;
-    file = self.name + ".typ";
+    file = args.file or (self.name + ".typ");
   }));
 in {
   basic = mkTest {
@@ -99,5 +107,11 @@ in {
     extraPackages = {
       local = note-me;
     };
+  };
+
+  githubFetch = mkTest {
+    name = "gitHubImport";
+    file = "gitImport.typ";
+    extraPackages = note-meGh;
   };
 }
