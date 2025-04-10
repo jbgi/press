@@ -9,6 +9,8 @@
 
     # Put your non-Universe packages in the input section
     # Declare them to not be a flake.
+    #
+    # You can also use normal FODs like fetchFromGithub
     unify = {
       url = "github:ChHecker/unify";
       flake = false;
@@ -67,6 +69,15 @@
         # To apply a patch, it much be a patch to the entire Typst Packages repo.
         # Default: []
         univerPatches = [ ];
+      };
+
+      devShells.${system}.default = pkgs.mkShell {
+        stdenv = pkgs.stdenvNoCC;
+        inputsFrom = [ self.packages.${system}.default ];
+        packages = [
+          pkgs.tinymist
+          pkgs.typstyle
+        ];
       };
     };
 }
