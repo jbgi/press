@@ -4,7 +4,8 @@
   fira-code,
   inconsolata,
   ripgrep,
-}: let
+}:
+let
   note-me = fetchTree {
     type = "github";
     narHash = "sha256-Bpmdt59Tt4DNBg8G435xccH/W3aYSK+EuaU2ph2uYTY=";
@@ -19,13 +20,22 @@
     repo = "note-me";
     hash = "sha256-Bpmdt59Tt4DNBg8G435xccH/W3aYSK+EuaU2ph2uYTY=";
   };
-  
-  mkTest = {name, ...}@args: buildTypstDocument (self: (args // {
-    inherit name;
-    src = ./documents;
-    file = args.file or (self.name + ".typ");
-  }));
-in {
+
+  mkTest =
+    { name, ... }@args:
+    buildTypstDocument (
+      self:
+      (
+        args
+        // {
+          inherit name;
+          src = ./documents;
+          file = args.file or (self.name + ".typ");
+        }
+      )
+    );
+in
+{
   basic = mkTest {
     name = "basic";
     typstUniverse = false;
@@ -76,13 +86,13 @@ in {
   gitImport = mkTest {
     name = "gitImport";
     extraPackages = {
-      local = [note-me];
+      local = [ note-me ];
     };
   };
 
   gitImportList = mkTest {
     name = "gitImport";
-    extraPackages = [note-me];
+    extraPackages = [ note-me ];
   };
 
   gitImportString = mkTest {

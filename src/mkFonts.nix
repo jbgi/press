@@ -1,10 +1,10 @@
 {
   fonts,
   name,
-  
-  symlinkJoin
+
+  symlinkJoin,
 }:
-  symlinkJoin {
-    name = name + "-fonts";
-    paths = fonts;
-  }
+symlinkJoin {
+  name = name + "-fonts";
+  paths = fonts;
+}
