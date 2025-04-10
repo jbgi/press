@@ -96,7 +96,6 @@ in
               # Might as well accept lists, str, path, or drv as well here.
               let
                 valType = typeOf paths;
-                valIsDrv = (isDerivation paths) || (paths ? outPath);
               in
               if valType == "list" then
                 lists.foldl (accum: src: accum ++ [ (userPack { inherit src namespace; }) ]) pkgs paths
@@ -158,7 +157,7 @@ in
             typstPatches;
 
         buildPhase =
-          args.buildPhase or (''
+          args.buildPhase or ''
             runHook preBuild
 
             typst c ${file} ${lib.optionalString verbose "--verbose"} ${
@@ -166,7 +165,7 @@ in
             } -f ${format} $out
 
             runHook postBuild
-          '');
+          '';
 
         meta = meta // {
           badPlatforms = meta.badPlatforms or [ ] ++ typst.badPlatforms or [ ];
