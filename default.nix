@@ -48,15 +48,17 @@ in
         userPackages =
           let
             inherit (builtins) typeOf;
-            
+
             userPack = callPackage ./src/mkPackage.nix;
           in
-          assert assertMsg (typeOf extraPackages == "set") "extraPackages must be of type AttributeSet[String, List[TypstPackage]]";
-            lib.attrsets.foldlAttrs (
-              pkgs: namespace: paths:
-              assert assertMsg (typeOf paths == "list") "the attrset values must be lists of typst packages";
-                lib.lists.foldl (accum: src: accum ++ [ (userPack { inherit src namespace; }) ]) pkgs paths
-            ) [ ] extraPackages;
+          assert assertMsg (
+            typeOf extraPackages == "set"
+          ) "extraPackages must be of type AttributeSet[String, List[TypstPackage]]";
+          lib.attrsets.foldlAttrs (
+            pkgs: namespace: paths:
+            assert assertMsg (typeOf paths == "list") "the attrset values must be lists of typst packages";
+            lib.lists.foldl (accum: src: accum ++ [ (userPack { inherit src namespace; }) ]) pkgs paths
+          ) [ ] extraPackages;
 
         # All fonts in nixpkgs should follow this.
         fontsDrv = callPackage ./src/mkFonts.nix { inherit fonts name; };
@@ -64,7 +66,7 @@ in
         # Combine all the packages to one drv
         pkgsDrv = buildEnv {
           name = name + "-deps";
-          pathsToLink = [ "/share/typst/packages"];
+          pathsToLink = [ "/share/typst/packages" ];
           paths = userPackages;
         };
 

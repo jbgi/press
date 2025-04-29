@@ -74,7 +74,7 @@
         ];
         # [Optional] Whether to have a verbose Typst compilation session
         # Default: false
-        verbose = false
+        verbose = false;
       };
 
       devShells.${system}.default = pkgs.mkShell {

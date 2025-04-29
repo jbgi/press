@@ -8,7 +8,14 @@
       nixpkgs,
     }:
     let
+      system = "x86_64-linux";
+
       overlay = import ./.;
+
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ overlay ];
+      };
     in
     {
       overlays = {
@@ -16,43 +23,29 @@
         buildTypst = overlay;
       };
 
-      checks.x86_64-linux =
-        let
-          pkgs = import nixpkgs {
-            system = "x86_64-linux";
-            overlays = [ (import self) ];
-          };
-        in
-        builtins.removeAttrs (pkgs.callPackage ./tests { }) [
-          "override"
-          "overrideDerivation"
-        ];
+      checks.x86_64-linux = builtins.removeAttrs (pkgs.callPackage ./tests { }) [
+        "override"
+        "overrideDerivation"
+      ];
 
       templates.default = {
         path = ./template;
         description = "A basic template using Press";
       };
 
-      devShells =
-        let
-          system = "x86_64-linux";
-          pkgs = import nixpkgs {
-            inherit system;
-          };
-        in
-        {
-          ${system}.default = pkgs.mkShell {
-            stdenv = pkgs.stdenvNoCC;
-            packages =
-              let
-                p = pkgs;
-              in
-              [
-                p.nil
-                p.nixfmt-tree
-                p.typstyle
-              ];
-          };
-        };
+      formatter.${system} = pkgs.nixfmt-tree;
+
+      devShells.${system}.default = pkgs.mkShell {
+        stdenv = pkgs.stdenvNoCC;
+        packages =
+          let
+            p = pkgs;
+          in
+          [
+            p.nil
+            p.nixfmt-tree
+            p.typstyle
+          ];
+      };
     };
 }
