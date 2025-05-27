@@ -70,27 +70,36 @@ in
           paths = userPackages;
         };
 
-        typstUni = typst.withPackages typstEnv;
+        typstWrap =
+          let
+            typstUni = typst.withPackages typstEnv;
+          in
+          stdenvNoCC.mkDerivation {
+            strictDeps = true;
+            dontUnpack = true;
+            dontConfigure = true;
+            dontInstall = true;
 
-        typstWrap = stdenvNoCC.mkDerivation {
-          strictDeps = true;
-          dontUnpack = true;
-          dontConfigure = true;
-          dontInstall = true;
+            name = "typst-wrapped";
+            buildInputs = [ makeBinaryWrapper ];
+            buildPhase = ''
+              runHook preBuild
 
-          name = "typst-wrapped";
-          buildInputs = [ makeBinaryWrapper ];
-          buildPhase = ''
-            runHook preBuild
+              makeWrapper ${lib.getExe typstUni} $out/bin/typst \
+                --prefix TYPST_FONT_PATHS : ${fontsDrv}/share/fonts \
+                --set TYPST_PACKAGE_PATH ${pkgsDrv}/share/typst/packages
 
-            makeWrapper ${lib.getExe typstUni} $out/bin/typst \
-              --prefix TYPST_FONT_PATHS : ${fontsDrv}/share/fonts \
-              --set TYPST_PACKAGE_PATH ${pkgsDrv}/share/typst/packages
+              runHook postBuild
+            '';
 
-            runHook postBuild
-          '';
-          meta.mainProgram = "typst";
-        };
+            # Maybe upstream this?
+            shellHook = ''
+              TYPST_PACKAGE_CACHE_PATH="${typstUni}/lib/typst/packages"
+              TYPST_PACKAGE_PATH="${pkgsDrv}/share/typst/packages"
+              TYPST_FONT_PATHS="${fontsDrv}/share/fonts"
+            '';
+            meta.mainProgram = "typst";
+          };
       in
       {
         nativeBuildInputs = args.nativeBuildInputs or [ ] ++ [ typstWrap ];
@@ -105,12 +114,6 @@ in
 
             runHook postBuild
           '';
-
-        passthru = {
-          TYPST_FONT_PATHS = "${fontsDrv}/share/fonts";
-          TYPST_PACKAGE_PATH = "${pkgsDrv}/share/typst/packages";
-          TYPST_PACKAGE_CACHE_PATH = "${typstUni}/lib/typst/packages";
-        };
 
         meta = meta // {
           badPlatforms = meta.badPlatforms or [ ] ++ typst.badPlatforms or [ ];

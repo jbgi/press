@@ -83,11 +83,6 @@
           pkgs.tinymist
           pkgs.typstyle
         ];
-        inherit (self.packages.${system}.default)
-          TYPST_FONT_PATHS
-          TYPST_PACKAGE_PATH
-          TYPST_PACKAGE_CACHE_PATH
-          ;
       };
     };
 }
