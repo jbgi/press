@@ -91,13 +91,19 @@ in
 
               runHook postBuild
             '';
+
+            # Maybe upstream this?
+            shellHook = ''
+              TYPST_PACKAGE_CACHE_PATH="${typstUni}/lib/typst/packages"
+              TYPST_PACKAGE_PATH="${pkgsDrv}/share/typst/packages"
+              TYPST_FONT_PATHS="${fontsDrv}/share/fonts"
+            '';
             meta.mainProgram = "typst";
           };
       in
       {
         nativeBuildInputs = args.nativeBuildInputs or [ ] ++ [ typstWrap ];
         strictDeps = true;
-
         buildPhase =
           args.buildPhase or ''
             runHook preBuild

@@ -77,8 +77,7 @@
         verbose = false;
       };
 
-      devShells.${system}.default = pkgs.mkShell {
-        stdenv = pkgs.stdenvNoCC;
+      devShells.${system}.default = pkgs.mkShellNoCC {
         inputsFrom = [ self.packages.${system}.default ];
         packages = [
           pkgs.tinymist
