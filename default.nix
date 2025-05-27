@@ -70,34 +70,31 @@ in
           paths = userPackages;
         };
 
-        typstWrap =
-          let
-            typstUni = typst.withPackages typstEnv;
-          in
-          stdenvNoCC.mkDerivation {
-            strictDeps = true;
-            dontUnpack = true;
-            dontConfigure = true;
-            dontInstall = true;
+        typstUni = typst.withPackages typstEnv;
 
-            name = "typst-wrapped";
-            buildInputs = [ makeBinaryWrapper ];
-            buildPhase = ''
-              runHook preBuild
+        typstWrap = stdenvNoCC.mkDerivation {
+          strictDeps = true;
+          dontUnpack = true;
+          dontConfigure = true;
+          dontInstall = true;
 
-              makeWrapper ${lib.getExe typstUni} $out/bin/typst \
-                --prefix TYPST_FONT_PATHS : ${fontsDrv}/share/fonts \
-                --set TYPST_PACKAGE_PATH ${pkgsDrv}/share/typst/packages
+          name = "typst-wrapped";
+          buildInputs = [ makeBinaryWrapper ];
+          buildPhase = ''
+            runHook preBuild
 
-              runHook postBuild
-            '';
-            meta.mainProgram = "typst";
-          };
+            makeWrapper ${lib.getExe typstUni} $out/bin/typst \
+              --prefix TYPST_FONT_PATHS : ${fontsDrv}/share/fonts \
+              --set TYPST_PACKAGE_PATH ${pkgsDrv}/share/typst/packages
+
+            runHook postBuild
+          '';
+          meta.mainProgram = "typst";
+        };
       in
       {
         nativeBuildInputs = args.nativeBuildInputs or [ ] ++ [ typstWrap ];
         strictDeps = true;
-
         buildPhase =
           args.buildPhase or ''
             runHook preBuild
@@ -108,6 +105,12 @@ in
 
             runHook postBuild
           '';
+
+        passthru = {
+          TYPST_FONT_PATHS = "${fontsDrv}/share/fonts";
+          TYPST_PACKAGE_PATH = "${pkgsDrv}/share/typst/packages";
+          TYPST_PACKAGE_CACHE_PATH = "${typstUni}/lib/typst/packages";
+        };
 
         meta = meta // {
           badPlatforms = meta.badPlatforms or [ ] ++ typst.badPlatforms or [ ];

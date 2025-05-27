@@ -77,13 +77,17 @@
         verbose = false;
       };
 
-      devShells.${system}.default = pkgs.mkShell {
-        stdenv = pkgs.stdenvNoCC;
+      devShells.${system}.default = pkgs.mkShellNoCC {
         inputsFrom = [ self.packages.${system}.default ];
         packages = [
           pkgs.tinymist
           pkgs.typstyle
         ];
+        inherit (self.packages.${system}.default)
+          TYPST_FONT_PATHS
+          TYPST_PACKAGE_PATH
+          TYPST_PACKAGE_CACHE_PATH
+          ;
       };
     };
 }
