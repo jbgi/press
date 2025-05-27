@@ -95,4 +95,13 @@ in
       local = [ note-meGh ];
     };
   };
+
+  inputs = mkTest {
+    name = "inputs";
+    inputs = {
+      language = "en";
+      name = "John Doe";
+    };
+  };
+
 }

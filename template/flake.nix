@@ -43,6 +43,11 @@
         # This is relative to the directory input above.
         # Default: "main.typ"
         file = "main.typ";
+        # [Optional] Key-value attribute set passed as --input arguments to typst
+        # (available as the `sys.inputs` dictionary)
+        inputs = {
+          "language" = "fr";
+        };
         # [Optional] Typst universe package selection
         #
         # Pass in a function that accept an attrset of Typst pacakges,

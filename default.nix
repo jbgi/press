@@ -23,6 +23,7 @@ in
       "extraPackages"
       "fonts"
       "typstEnv"
+      "inputs"
     ];
 
     # All the drv args
@@ -37,6 +38,7 @@ in
         typstEnv ? (_: [ ]),
         extraPackages ? { },
         file ? "main.typ",
+        inputs ? { },
         format ? "pdf",
         ...
       }@args:
@@ -110,6 +112,10 @@ in
 
             typst c ${file} ${lib.optionalString verbose "--verbose"} ${
               lib.optionalString (format == "html") "--features html"
+            } ${
+              lib.concatStringsSep " " (
+                lib.mapAttrsToList (name: value: "--input ${name}=${lib.escapeShellArg value}") inputs
+              )
             } -f ${format} $out
 
             runHook postBuild
