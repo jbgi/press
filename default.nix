@@ -21,9 +21,9 @@ in
     # or things break.
     excludeDrvArgNames = [
       "extraPackages"
-      "fonts"
-      "typstEnv"
-      "inputs"
+      #"fonts"
+      #"typstEnv"
+      #"inputs"
     ];
 
     # All the drv args
@@ -31,7 +31,7 @@ in
     extendDrvArgs =
       finalAttrs:
       {
-        name ? "${args.pname}-${args.version}",
+        name ? "${finalAttrs.pname}-${finalAttrs.version}",
         verbose ? false,
         meta ? { },
         fonts ? [ ],
@@ -42,10 +42,6 @@ in
         format ? "pdf",
         ...
       }@args:
-      assert assertMsg (builtins.elem format [
-        "pdf"
-        "html"
-      ]) "Typst only supports html or pdf output.";
       let
         userPackages =
           let
@@ -60,18 +56,18 @@ in
             pkgs: namespace: paths:
             assert assertMsg (typeOf paths == "list") "the attrset values must be lists of typst packages";
             lib.lists.foldl (accum: src: accum ++ [ (userPack { inherit src namespace; }) ]) pkgs paths
-          ) [ ] extraPackages;
+          ) [ ] finalAttrs.extraPackages;
 
         # All fonts in nixpkgs should follow this.
-        fontsDrv = callPackage ./src/mkFonts.nix { inherit fonts name; };
+        fontsDrv = callPackage ./src/mkFonts.nix { inherit (finalAttrs) fonts name; };
 
         # Combine all the packages to one drv
         pkgsDrv = buildEnv {
-          name = name + "-deps";
+          name = finalAttrs.name + "-deps";
           pathsToLink = [ "/share/typst/packages" ];
           paths = userPackages;
         };
-        typstUni = typst.withPackages typstEnv;
+        typstUni = typst.withPackages finalAttrs.typstEnv;
 
         typstWrap = stdenvNoCC.mkDerivation {
           strictDeps = true;
@@ -97,16 +93,20 @@ in
         nativeBuildInputs = args.nativeBuildInputs or [ ] ++ [ typstWrap ];
         strictDeps = true;
         buildPhase =
+          assert assertMsg (builtins.elem finalAttrs.format [
+            "pdf"
+            "html"
+          ]) "Typst only supports html or pdf output.";
           args.buildPhase or ''
             runHook preBuild
 
-            typst c ${file} ${lib.optionalString verbose "--verbose"} ${
-              lib.optionalString (format == "html") "--features html"
+            typst c ${finalAttrs.file} ${lib.optionalString finalAttrs.verbose "--verbose"} ${
+              lib.optionalString (finalAttrs.format == "html") "--features html"
             } ${
               lib.concatStringsSep " " (
-                lib.mapAttrsToList (name: value: "--input ${name}=${lib.escapeShellArg value}") inputs
+                lib.mapAttrsToList (name: value: "--input ${name}=${lib.escapeShellArg value}") finalAttrs.inputs
               )
-            } -f ${format} $out
+            } -f ${finalAttrs.format} $out
 
             runHook postBuild
           '';
